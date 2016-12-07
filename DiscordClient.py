@@ -216,7 +216,50 @@ async def on_message(message):
 				
 					await client.send_message(message.channel, endMsg) 
 
-			
+			elif (tokenizedContent[1] == "py" and "py" not in properties.disabled):
+				lineContent = content.split("\n")
+				if len(lineContent)>3 and lineContent[1] == "```" and lineContent[-1] == "```" :
+					inputMessedWith = False
+					pythonContent="import time\nimport random\n"
+					for i in range(2,len(lineContent)-1) :
+						if lineContent[i] != "":
+							if not "import" in lineContent[i] : #this does cause collateral damage..
+								if lineContent[i].rstrip()[-1] == ":" :
+									pythonContent+=lineContent[i]
+								else :
+									pythonContent+=lineContent[i]+"\n"
+							else :
+								inputMessedWith = True
+					
+					pythonContent = pythonContent.replace('\"', '\\\"')
+					
+					pythonCommand="python3.5"
+					#TODO make it selectable (in properties, users cannot be trusted)
+					
+					#TODO define command in properties
+					#TODO add "pyexec" command that uses exec() (ie can modify the running program, it should be disabled by default)
+					proc = subprocess.Popen(pythonCommand+' -c "'+pythonContent+'"', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+					pyout, pyerr = proc.communicate(timeout=3)
+					finalMessage=""
+					try :
+						nick = str(message.author.nick)
+					except AttributeError : # no nickname
+						nick = str(message.author)
+					finalMessage+="Python program from "+nick+".\n"
+					
+					if inputMessedWith :
+						finalMessage+="*Warning: some statements have been modified (such as imports being removed).*\n\n"
+					if str(pyout)=="":
+						finalMessage+="[Nothing on stdout]\n"
+					else:
+						finalMessage+="stdout:\n```\n"+str(pyout)+"\n```\n"
+					if str(pyerr)!="":
+						finalMessage+="stderr:\n```\n"+str(pyerr)+"\n```\n"
+					await client.send_message(message.channel, finalMessage)
+					
+				else :
+					await client.send_message(message.channel, "Malformed python call.")
+						
 			
 			if len(tokenizedContent)>2 :
 				# print dongers
@@ -329,6 +372,10 @@ async def on_message(message):
 					proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 					cowout, cowerr = proc.communicate(timeout=3)
 					await client.send_message(message.channel, "```\n"+str(cowout)+"\n"+str(cowerr)+"\n```")
+					
+					
+				# python 3 interpreter
+				
 
 	# from here on, it'as about the [card name] searches
 	

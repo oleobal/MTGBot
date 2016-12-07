@@ -8,6 +8,8 @@ Discord Bot to fetch and display Magic : the Gathering cards.
 "mc" searches on http://magiccards.info/ :
     tron mc o:"Counter target spell"
 	
+"py" can execute Python programs.
+	
 "donger" produces dongers :
     tron donger <lenny, wizard-lenny, spider-lenny, wall>
     These dongers can use an argument, for instance :
@@ -21,9 +23,6 @@ Discord Bot to fetch and display Magic : the Gathering cards.
 "company" makes you feel less alone.
 
 "cowsay" and "toilet" are classic ASCII art generators.
-    Pass them text for normal use ; use "-h" option for more.
-    Use <command> list-files to see the alternate cows or fonts.
-    Cowsay also has a sister command, "cowthink".
     Example :
         tron cowsay -f dragon-and-cow.cow I'm a [Clockwork Dragon]
 ```
