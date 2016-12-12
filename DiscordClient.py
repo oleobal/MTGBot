@@ -5,12 +5,18 @@ import urllib.request
 import urllib.parse
 
 import random
-from time import clock # I'm running this on UNIX, so may vary on windows apparently
+from time import clock,localtime,strftime # I'm running this on UNIX, so may vary on windows apparently
+
+from io import StringIO
 
 # running console commands
 import subprocess
 
 from Properties import *
+properties = Properties()
+
+if not "cardgen" in properties.disabled :
+	from cardGenerator import *
 
 # used to make sure two slot machine uses at the same second won't have the same results
 slotMachineGlobal = 0
@@ -20,7 +26,7 @@ slotMachineGlobal = 0
 client = discord.Client()
 
 #reading properties.conf into object
-properties = Properties()
+
 
 # put the right ones in properties.conf
 email = properties.username
@@ -41,15 +47,20 @@ async def on_message(message):
 		return
 		
 	global slotMachineGlobal
-
-	print("New message")
+	
+	# building ourselves a timestamp
+	time = strftime("%Z %Y-%m-%d %H:%M:%S", localtime())
+	
+	
+	print(time+" | New message")
 	content = message.content
 	tokenizedContent = content.split()
 
 	if len(tokenizedContent)>1 :
 		#TODO : support for multi-words summons
 		if tokenizedContent[0] in properties.summon :
-			print("Query : "+tokenizedContent[1])
+			
+			print(time+" | Query : "+tokenizedContent[1])
 			
 			if tokenizedContent[1] == "help" and "help" not in properties.disabled :
 				helpMsg= "Call with "
@@ -66,6 +77,25 @@ async def on_message(message):
 				
 				
 				await client.send_message(message.channel, helpMsg)
+			
+			
+			
+			elif tokenizedContent[1] == "cardgen" and "cardgen" not in properties.disabled :
+				
+				lineContent = content.split("\n") 
+				if len(lineContent)<3:
+					await client.send_message(message.channel, "Malformed cardgen request.")
+				
+				genName = lineContent[1] #FIXME once costs are up and running
+				genType = lineContent[2]
+				genText = ""
+				if len(lineContent)>3 :
+					for i in lineContent[3:] :
+						genText+=i+"\n"
+				
+				genPath = genCard(name=genName, type=genType, text=genText)
+				await client.send_file(message.channel, genPath)
+				
 			
 			# slot machine
 			elif tokenizedContent[1] == "jackpot" and "jackpot" not in properties.disabled:
@@ -216,20 +246,37 @@ async def on_message(message):
 				
 					await client.send_message(message.channel, endMsg) 
 
+					
+					
+					
+					
+					
+					
+			#execute python code		
 			elif (tokenizedContent[1] == "py" and "py" not in properties.disabled):
 				lineContent = content.split("\n")
-				if len(lineContent)>3 and lineContent[1] == "```" and lineContent[-1] == "```" :
+				if len(lineContent)>3 and (lineContent[1] == "```" or lineContent[1] == "```Python") and lineContent[-1] == "```" :
 					inputMessedWith = False
 					pythonContent="import time\nimport random\n"
 					for i in range(2,len(lineContent)-1) :
 						if lineContent[i] != "":
-							if not "import" in lineContent[i] : #this does cause collateral damage..
+							
+							if "pybandages" in properties.disabled :
+								
 								if lineContent[i].rstrip()[-1] == ":" :
 									pythonContent+=lineContent[i]
 								else :
 									pythonContent+=lineContent[i]+"\n"
 							else :
-								inputMessedWith = True
+								if (not "import" in lineContent[i]) and (not "exec" in lineContent[i]) and (not "eval" in lineContent[i]) and (not "getattr" in lineContent[i]): # this does cause collateral damage..
+								
+									if lineContent[i].rstrip()[-1] == ":" :
+										pythonContent+=lineContent[i]
+									else :
+										pythonContent+=lineContent[i]+"\n"
+								else :
+									inputMessedWith = True
+								
 					
 					pythonContent = pythonContent.replace('\"', '\\\"')
 					
@@ -248,7 +295,7 @@ async def on_message(message):
 					finalMessage+="Python program from "+nick+".\n"
 					
 					if inputMessedWith :
-						finalMessage+="*Warning: some statements have been modified (such as imports being removed).*\n\n"
+						finalMessage+="*Warning: some statements modified/removed (such as imports/execs/evals).*\n\n"
 					if str(pyout)=="":
 						finalMessage+="[Nothing on stdout]\n"
 					else:
@@ -259,7 +306,58 @@ async def on_message(message):
 					
 				else :
 					await client.send_message(message.channel, "Malformed python call.")
-						
+
+			# executed with exec() without checks
+			elif (tokenizedContent[1] == "pyexec" and "pyexec" not in properties.disabled):
+				lineContent = content.split("\n")
+				pythonContent=""
+				if len(lineContent)>3 and (lineContent[1] == "```" or lineContent[1] == "```Python") and lineContent[-1] == "```" :
+					for i in range(2,len(lineContent)-1) :
+						if lineContent[i] != "":
+							#if lineContent[i].rstrip()[-1] == ":" :
+							#	pythonContent+=lineContent[i]
+							#else :
+							pythonContent+=lineContent[i]+"\n"
+					
+					#pythonContent = pythonContent.replace('\"', '\\\"')
+
+					# redirecting stdout and stderr to print to chat
+					pyexecout = StringIO("")
+					pyexecerr = StringIO("")
+					#totally optimized
+					import sys
+					orgOut = sys.stdout
+					orgErr = sys.stderr
+					sys.stdout = pyexecout
+					sys.stderr = pyexecerr
+					#print("What you typed :\n\n"+pythonContent+"\n----------\n\n")
+					exec(pythonContent, globals(), locals())
+					sys.stdout = orgOut
+					sys.stderr = orgErr
+					#del sys
+					
+					finalMessage=""
+					try :
+						nick = str(message.author.nick)
+					except AttributeError : # no nickname
+						nick = str(message.author)
+					finalMessage+="Python program from "+nick+".\n"
+					
+					if str(pyexecout.getvalue())=="":
+						finalMessage+="[Nothing on stdout]\n"
+					else:
+						finalMessage+="stdout:\n```\n"+str(pyexecout.getvalue())+"\n```\n"
+					if str(pyexecerr.getvalue())!="":
+						finalMessage+="stderr:\n```\n"+str(pyexecerr.getvalue())+"\n```\n"
+					await client.send_message(message.channel, finalMessage)
+					
+				else :
+					await client.send_message(message.channel, "Malformed python call.")
+			
+			
+			
+			
+			
 			
 			if len(tokenizedContent)>2 :
 				# print dongers
@@ -387,7 +485,7 @@ async def on_message(message):
 			# ss1 = content[ouvert: fin]
 			fin = content.find("]", debut)
 			requete = content[debut: fin]
-			print("Request : " + requete)
+			print(time+" | Request : " + requete)
 			if len(requete) > 2:
 				msg_list = ask_api.ask_card(requete)
 				

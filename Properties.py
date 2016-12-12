@@ -45,7 +45,8 @@ class Properties :
 			elif words[0] == "disabled" :
 				self.disabled.append(workingLine[9:len(workingLine)])
 				#print(disabled)
-				
+			
+			
 			# now this is a bit more complicated..
 			elif words[0] == "helpmsg" :
 				self.helpmsg = ""
