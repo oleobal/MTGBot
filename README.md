@@ -1,4 +1,4 @@
-Discord Bot to fetch and display Magic : the Gathering cards.
+Discord Bot with Magic: the Gathering --related features.
 ---
 
 .. And other minor features. Here's a list of commands :
@@ -7,14 +7,13 @@ Discord Bot to fetch and display Magic : the Gathering cards.
 
 "mc" searches on http://magiccards.info/ :
     tron mc o:"Counter target spell"
-	
+
+"cardgen" can generate card images on the fly
+
 "py" can execute Python programs.
 	
 "donger" produces dongers :
-    tron donger <lenny, wizard-lenny, spider-lenny, wall>
-    These dongers can use an argument, for instance :
-       tron donger wall [text]
-	
+
 "jackpot" spins a slot machine.
 
 "rekt" helps maintain your cred.
@@ -23,15 +22,17 @@ Discord Bot to fetch and display Magic : the Gathering cards.
 "company" makes you feel less alone.
 
 "cowsay" and "toilet" are classic ASCII art generators.
-    Example :
-        tron cowsay -f dragon-and-cow.cow I'm a [Clockwork Dragon]
+    tron cowsay -f dragon-and-cow.cow I'm a [Clockwork Dragon]
 ```
+
+All these are toggleable in a configuration file.
 
 ### Installation instructions :
 
-Watch out, this bot expects a Unix environment. Now it might work on Windows, it might not (more probable, but you're welcome to try). But function calls were made without Windows in mind.
+Watch out, this bot is made for Unix. You're welcome to try it on Windows (probably by disabling features), I suppose.
 
-1. Install Python 3.5 (latest release at time of writing, won't work on earlier versions)
+
+1. Install Python 3.5 (latest release at time of writing, won't work on earlier versions). When I write ```pip```, I of course mean the Python 3 version, so ```pip3``` or ```python3 pip``` or something along those lines.
 
 2. The following instructions have to be executed in command line 
 
@@ -51,7 +52,13 @@ Two notes here :
 - I find nohup to be a convenient way to do this
 - Discord might send e-mails to validate your bot's IP, which can be frustrating. Don't execute the bot twenty times in a row scratching your head, just wait for the (often not timely) e-mails.
 
-##### Is there a simpler way ?
+
+
+#### Enabling cardgen
+
+This requires Pillow if it's not already there. But before you install it, you'll need libraries to read the TrueType fonts used by the generator. On Debian the corresponding package is ```libfreetype6-dev``` ; then, you are free to ```pip install pillow```. If it was already installed, you might need to recompile it (just ```pip uninstall pillow``` and install it again)
+
+#### Is there a simpler way ?
 
 Well, I guess you could just invite the instance I'm hosting to your server. Send me a PM or something, I won't check invites otherwise.
 

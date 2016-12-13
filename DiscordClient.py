@@ -86,6 +86,10 @@ async def on_message(message):
 				if len(lineContent)<3:
 					await client.send_message(message.channel, "Malformed cardgen request.")
 				
+				genImgUrl=""
+				if len(tokenizedContent)>2 :
+					genImgUrl=tokenizedContent[2]
+				
 				genName = lineContent[1] #FIXME once costs are up and running
 				genType = lineContent[2]
 				genText = ""
@@ -93,7 +97,7 @@ async def on_message(message):
 					for i in lineContent[3:] :
 						genText+=i+"\n"
 				
-				genPath = genCard(name=genName, type=genType, text=genText)
+				genPath = genCard(name=genName, type=genType, text=genText, imgurl=genImgUrl)
 				await client.send_file(message.channel, genPath)
 				
 			
