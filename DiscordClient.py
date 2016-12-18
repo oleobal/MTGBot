@@ -63,17 +63,28 @@ async def on_message(message):
 			print(time+" | Query : "+tokenizedContent[1])
 			
 			if tokenizedContent[1] == "help" and "help" not in properties.disabled :
-				helpMsg= "Call with "
-				for i in properties.summon :
-					helpMsg+="\""+i+"\""
-					if i != properties.summon[-1] :
-						helpMsg+=" or "
-					else :
-						helpMsg+="."
+				if len(tokenizedContent) == 2 :
+					helpMsg= "Call with "
+					for i in properties.summon :
+						helpMsg+="\""+i+"\""
+						if i != properties.summon[-1] :
+							helpMsg+=" or "
+						else :
+							helpMsg+=".\n"
+					helpMsg+="Use \"tron help <command>\" for details on a command.\n"
+					
+					helpMsg+="```\n"
+					helpMsg+=properties.helpmsg
+					helpMsg+="```\n"
 				
-				helpMsg+="```\n"
-				helpMsg+=properties.helpmsg
-				helpMsg+="```\n"
+				else :
+					helpMsg= "Help for **"+tokenizedContent[2]+"** :\n"
+					if tokenizedContent[2] in properties.helpmsgcommand :
+						helpMsg+="```\n"
+						helpMsg+=properties.helpmsgcommand[tokenizedContent[2]]
+						helpMsg+="```\n"
+					else:
+						helpMsg+="*No help available.*"
 				
 				
 				await client.send_message(message.channel, helpMsg)

@@ -58,6 +58,13 @@ Two notes here :
 
 This requires Pillow if it's not already there. But before you install it, you'll need libraries to read the TrueType fonts used by the generator. On Debian the corresponding package is ```libfreetype6-dev``` ; then, you are free to ```pip install pillow```. If it was already installed, you might need to recompile it (just ```pip uninstall pillow``` and install it again)
 
+Then, go and enable cardgen in properties.conf (remove the "disabled" entry).
+#### Enabling cowsay/cowthink/toilet
+
+Simply install the required program (cowsay or toilet).
+
+Then, go and enable it in properties.conf (remove the "disabled" entry).
+
 #### Is there a simpler way ?
 
 Well, I guess you could just invite the instance I'm hosting to your server. Send me a PM or something, I won't check invites otherwise.
