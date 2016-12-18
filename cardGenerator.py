@@ -20,7 +20,128 @@ import urllib.request
 import urllib.parse
 
 def genCard(name="Nameless", type="Typeless", pt="", cost="", text="", imgurl="", returnType="path"):
-	frame = Image.open("cardgen/artifact.png").convert('RGBA') # convert to avoid bug https://github.com/python-pillow/Pillow/issues/646#issuecomment-42615401
+
+	# parsing costs to determine colour
+	# finalCost contains the filenames without path or extension ("U" -> "cardgen/symbols/U.png")
+	finalCost=[]
+	idx = 0
+	while idx < len(cost) :
+		i=cost[idx]
+		i=i.upper()
+		# single symbols
+		if i in ['W', 'U', 'B', 'R', 'G', 'S', 'X','C' ] : # classic magic eructation
+			finalCost.append(i)
+			
+		
+		
+		# numbers 0-20
+		elif i in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] :
+			if (idx+1 < len(cost)) and (cost[idx+1] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']) :
+				if i=="2" :
+					finalCost.append("20")
+					idx+=1
+				elif i=="1" :
+					finalCost.append(str(i+cost[idx+1]))
+					idx+=1
+				# else we just put one then the oether I guess
+				else :
+					finalCost.append(i)
+			else :
+				finalCost.append(i)
+		
+		# curly brackets
+		elif i=="{" :
+			k=1
+			item=""
+			while cost[idx+k] != "}" :
+				item+=cost[idx+k]
+				k+=1
+				
+			if item in ['W', 'U', 'B', 'R', 'G', 'S', 'X','C' ] :
+				finalCost.append(item)
+			elif item in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'] :
+				finalCost.append(item)
+			
+			elif item == "2B" or item == "2/B" or item == "B/2" or item == "B2" :
+				finalCost.append("2B")
+			elif item == "2W" or item == "2/W" or item == "W/2" or item == "W2" :
+				finalCost.append("2W")
+			elif item == "2G" or item == "2/G" or item == "G/2" or item == "G2" :
+				finalCost.append("2G")
+			elif item == "2U" or item == "2/U" or item == "U/2" or item == "U2" :
+				finalCost.append("2U")
+			elif item == "2R" or item == "2/R" or item == "R/2" or item == "R2" :
+				finalCost.append("2R")
+			
+			#ten colour pairs.. yay..
+			elif item=="UB" or item=="BU" or item=="U/B" or item=="B/U" :
+				finalCost.append("UB")
+			elif item=="UR" or item=="RU" or item=="U/R" or item=="R/U" :
+				finalCost.append("UR")
+			elif item=="UG" or item=="GU" or item=="U/G" or item=="G/U" :
+				finalCost.append("GU")
+			elif item=="UW" or item=="WU" or item=="U/W" or item=="W/U" :
+				finalCost.append("WU")
+			
+			elif item=="GB" or item=="BG" or item=="G/B" or item=="B/G" :
+				finalCost.append("BG")
+			elif item=="RB" or item=="BR" or item=="R/B" or item=="B/R" :
+				finalCost.append("BR")
+			elif item=="WB" or item=="BW" or item=="W/B" or item=="B/W" :
+				finalCost.append("WB")
+			
+			elif item=="WG" or item=="GW" or item=="W/G" or item=="G/W" :
+				finalCost.append("GW")
+			elif item=="WR" or item=="RW" or item=="W/R" or item=="R/W" :
+				finalCost.append("RW")
+				
+			elif item=="GR" or item=="RG" or item=="G/R" or item=="R/G" :
+				finalCost.append("RG")
+			
+			#phyrexian mana
+			elif item=="UP" or item=="PU" or item=="U/P" or item=="P/U" :
+				finalCost.append("UP")
+			elif item=="WP" or item=="PW" or item=="W/P" or item=="P/W" :
+				finalCost.append("WP")
+			elif item=="GP" or item=="PG" or item=="G/P" or item=="P/G" :
+				finalCost.append("GP")
+			elif item=="BP" or item=="PB" or item=="B/P" or item=="P/B" :
+				finalCost.append("BP")
+			elif item=="RP" or item=="PR" or item=="R/P" or item=="P/R" :
+				finalCost.append("RP")
+			
+			idx+=k
+		
+		idx+=1
+	#print(str(finalCost))
+	
+	#determining colour
+	colours=[]
+	for i in ['W', 'B', 'U', 'R', 'G'] :
+		for j in finalCost :
+			if i in j :
+				colours.append(i)
+	
+	# selecting appropriate frame
+	if len(colours) == 0 :
+		# now obviously all colourless aren't artifacts and a lot of artifacts have coloured costs but colourless nonartifacts are pretty rare so..
+		frame = Image.open("cardgen/artifact.png").convert('RGBA') # convert to avoid bug https://github.com/python-pillow/Pillow/issues/646#issuecomment-42615401
+	
+	elif len(colours) == 1 :
+		if 'W' in colours :
+			frame = Image.open("cardgen/white.png").convert('RGBA')
+		elif 'B' in colours :
+			frame = Image.open("cardgen/white.png").convert('RGBA')
+		elif 'U' in colours :
+			frame = Image.open("cardgen/blue.png").convert('RGBA')
+		elif 'R' in colours :
+			frame = Image.open("cardgen/red.png").convert('RGBA')
+		elif 'G' in colours :
+			frame = Image.open("cardgen/green.png").convert('RGBA')
+	else :
+		frame = Image.open("cardgen/gold.png").convert("RGBA")
+		
+		
 	draw = ImageDraw.Draw(frame)
 	
 	if imgurl != "" and (imgurl.endswith("jpg") or imgurl.endswith("jpeg") or imgurl.endswith("png") or imgurl.endswith("gif")):
@@ -155,99 +276,7 @@ def genCard(name="Nameless", type="Typeless", pt="", cost="", text="", imgurl=""
 	
 	#image-based cost
 	
-	# parsing
-	# finalCost contains the filenames without path or extension ("U" -> "cardgen/symbols/U.png")
-	finalCost=[]
-	idx = 0
-	while idx < len(cost) :
-		i=cost[idx]
-		i=i.upper()
-		# single symbols
-		if i in ['W', 'U', 'B', 'R', 'G', 'S', 'X','C' ] : # classic magic eructation
-			finalCost.append(i)
-			
-		
-		
-		# numbers 0-20
-		elif i in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] :
-			if (idx+1 < len(cost)) and (cost[idx+1] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']) :
-				if i=="2" :
-					finalCost.append("20")
-					idx+=1
-				elif i=="1" :
-					finalCost.append(str(i+cost[idx+1]))
-					idx+=1
-				# else we just put one then the oether I guess
-				else :
-					finalCost.append(i)
-			else :
-				finalCost.append(i)
-		
-		# curly brackets
-		elif i=="{" :
-			k=1
-			item=""
-			while cost[idx+k] != "}" :
-				item+=cost[idx+k]
-				k+=1
-				
-			if item in ['W', 'U', 'B', 'R', 'G', 'S', 'X','C' ] :
-				finalCost.append(item)
-			elif item in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'] :
-				finalCost.append(item)
-			
-			elif item == "2B" or item == "2/B" :
-				finalCost.append("2B")
-			elif item == "2W" or item == "2/W" :
-				finalCost.append("2W")
-			elif item == "2G" or item == "2/G" :
-				finalCost.append("2G")
-			elif item == "2U" or item == "2/U" :
-				finalCost.append("2U")
-			elif item == "2R" or item == "2/R" :
-				finalCost.append("2R")
-			
-			#ten colour pairs.. yay..
-			elif item=="UB" or item=="BU" or item=="U/B" or item=="B/U" :
-				finalCost.append("UB")
-			elif item=="UR" or item=="RU" or item=="U/R" or item=="R/U" :
-				finalCost.append("UR")
-			elif item=="UG" or item=="GU" or item=="U/G" or item=="G/U" :
-				finalCost.append("GU")
-			elif item=="UW" or item=="WU" or item=="U/W" or item=="W/U" :
-				finalCost.append("WU")
-			
-			elif item=="GB" or item=="BG" or item=="G/B" or item=="B/G" :
-				finalCost.append("BG")
-			elif item=="RB" or item=="BR" or item=="R/B" or item=="B/R" :
-				finalCost.append("BR")
-			elif item=="WB" or item=="BW" or item=="W/B" or item=="B/W" :
-				finalCost.append("WB")
-			
-			elif item=="WG" or item=="GW" or item=="W/G" or item=="G/W" :
-				finalCost.append("GW")
-			elif item=="WR" or item=="RW" or item=="W/R" or item=="R/W" :
-				finalCost.append("RW")
-				
-			elif item=="GR" or item=="RG" or item=="G/R" or item=="R/G" :
-				finalCost.append("RG")
-			
-			#phyrexian mana
-			elif item=="UP" or item=="PU" or item=="U/P" or item=="P/U" :
-				finalCost.append("UP")
-			elif item=="WP" or item=="PW" or item=="W/P" or item=="P/W" :
-				finalCost.append("WP")
-			elif item=="GP" or item=="PG" or item=="G/P" or item=="P/G" :
-				finalCost.append("GP")
-			elif item=="BP" or item=="PB" or item=="B/P" or item=="P/B" :
-				finalCost.append("BP")
-			elif item=="RP" or item=="PR" or item=="R/P" or item=="P/R" :
-				finalCost.append("RP")
-			
-			idx+=k
-		
-		idx+=1
-	#print(str(finalCost))
+
 	costOffset = 297-(18*len(finalCost))
 	for c in finalCost :
 		symbol = Image.open("cardgen/symbols/"+c+".png").convert('RGBA')
