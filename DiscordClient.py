@@ -90,7 +90,7 @@ async def on_message(message):
 				if len(tokenizedContent)>2 :
 					genImgUrl=tokenizedContent[2]
 				
-				nameAndCost = lineContent[1].split(sep=" - ", maxsplit=1) #FIXME once costs are up and running
+				nameAndCost = lineContent[1].split(sep=" - ", maxsplit=1)
 				genName=nameAndCost[0]
 				genCost=nameAndCost[1]
 				genType = lineContent[2]
@@ -98,7 +98,7 @@ async def on_message(message):
 				if len(lineContent)>3 :
 					for i in lineContent[3:] :
 						genText+=i+"\n"
-				
+
 				genPath = genCard(name=genName, cost=genCost, type=genType, text=genText, imgurl=genImgUrl)
 				await client.send_file(message.channel, genPath)
 				
@@ -456,7 +456,7 @@ async def on_message(message):
 				# elif tokenizedContent[1] == "bc" :
 				# actually that was dumb
 				
-				#now we're talking !
+				# calls to cowsay/cowthink/toilet (ascii art generators)
 				elif (
 					(tokenizedContent[1] == "cowsay" and "cowsay" not in properties.disabled)
 					or (tokenizedContent[1] == "cowthink" and "cowthink" not in properties.disabled)

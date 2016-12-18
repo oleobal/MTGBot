@@ -57,58 +57,7 @@ def genCard(name="Nameless", type="Typeless", pt="", cost="", text="", imgurl=""
 				item+=cost[idx+k]
 				k+=1
 				
-			if item in ['W', 'U', 'B', 'R', 'G', 'S', 'X','C' ] :
-				finalCost.append(item)
-			elif item in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'] :
-				finalCost.append(item)
-			
-			elif item == "2B" or item == "2/B" or item == "B/2" or item == "B2" :
-				finalCost.append("2B")
-			elif item == "2W" or item == "2/W" or item == "W/2" or item == "W2" :
-				finalCost.append("2W")
-			elif item == "2G" or item == "2/G" or item == "G/2" or item == "G2" :
-				finalCost.append("2G")
-			elif item == "2U" or item == "2/U" or item == "U/2" or item == "U2" :
-				finalCost.append("2U")
-			elif item == "2R" or item == "2/R" or item == "R/2" or item == "R2" :
-				finalCost.append("2R")
-			
-			#ten colour pairs.. yay..
-			elif item=="UB" or item=="BU" or item=="U/B" or item=="B/U" :
-				finalCost.append("UB")
-			elif item=="UR" or item=="RU" or item=="U/R" or item=="R/U" :
-				finalCost.append("UR")
-			elif item=="UG" or item=="GU" or item=="U/G" or item=="G/U" :
-				finalCost.append("GU")
-			elif item=="UW" or item=="WU" or item=="U/W" or item=="W/U" :
-				finalCost.append("WU")
-			
-			elif item=="GB" or item=="BG" or item=="G/B" or item=="B/G" :
-				finalCost.append("BG")
-			elif item=="RB" or item=="BR" or item=="R/B" or item=="B/R" :
-				finalCost.append("BR")
-			elif item=="WB" or item=="BW" or item=="W/B" or item=="B/W" :
-				finalCost.append("WB")
-			
-			elif item=="WG" or item=="GW" or item=="W/G" or item=="G/W" :
-				finalCost.append("GW")
-			elif item=="WR" or item=="RW" or item=="W/R" or item=="R/W" :
-				finalCost.append("RW")
-				
-			elif item=="GR" or item=="RG" or item=="G/R" or item=="R/G" :
-				finalCost.append("RG")
-			
-			#phyrexian mana
-			elif item=="UP" or item=="PU" or item=="U/P" or item=="P/U" :
-				finalCost.append("UP")
-			elif item=="WP" or item=="PW" or item=="W/P" or item=="P/W" :
-				finalCost.append("WP")
-			elif item=="GP" or item=="PG" or item=="G/P" or item=="P/G" :
-				finalCost.append("GP")
-			elif item=="BP" or item=="PB" or item=="B/P" or item=="P/B" :
-				finalCost.append("BP")
-			elif item=="RP" or item=="PR" or item=="R/P" or item=="P/R" :
-				finalCost.append("RP")
+			finalCost.append(curlyBracketsToFileName(item))
 			
 			idx+=k
 		
@@ -276,7 +225,6 @@ def genCard(name="Nameless", type="Typeless", pt="", cost="", text="", imgurl=""
 	
 	#image-based cost
 	
-
 	costOffset = 297-(18*len(finalCost))
 	for c in finalCost :
 		symbol = Image.open("cardgen/symbols/"+c+".png").convert('RGBA')
@@ -295,22 +243,105 @@ def genCard(name="Nameless", type="Typeless", pt="", cost="", text="", imgurl=""
 		fontTitle = ImageFont.truetype("cardgen/beleren-bold.ttf",14)
 		draw.text((18,257), type, font=fontTitle, fill=(0,0,0,224))
 	
-	#TODO ruletext parsing :
-	# - symbols
-	# - italics
-	
-	startHeight=283
-	
-	"""
-	if (len(text)<31) :
-		textWrapped=textwrap.wrap(text, width=30)
-		fontText = ImageFont.truetype("cardgen/mplantin.ttf",16)
-		for i in textWrapped :
-			draw.text((18,startHeight), i, font=fontText, fill=(0,0,0,224))
-			startHeight+=17
-	"""
+	#TODO add italics support
 	
 	# my plan is to go word per word, with a 2d cursor. That way we manage the symbols as well
+	# so we'll support the same symbols in text as in costs, plus tap ({T}) and energy ({E})
+	# Difference being it's only the curly-bracketed versions
+	
+	#startHeight=283
+	
+	if (len(text)<150) :
+		fontHeight = 17
+	else :
+		fontHeight = 14
+		
+	fontText = ImageFont.truetype("cardgen/mplantin.ttf",fontHeight)
+	
+	
+	# separating into "words", maybe the wrong choice of words
+	# basically, along spaces, but also separating {things} and \n from the rest
+	# So for instance ['{T}', ',', '{X}', ' ', ':', ' ', 'Do', ' ', 'nothing', '\n', '\n', 'If', ' ', 'things,', ' ', 'then', ' ', 'thongs', '\n']
+	tokens = text.split(" ")
+	
+	tidx=0
+	words = []
+	while tidx<len(tokens) :
+		t=tokens[tidx]
+		sym=""
+		idx = 0
+		while idx < len(t) :
+			i = t[idx]
+			
+			
+			if i=="\n":
+				if sym != "" :
+					words.append(sym)
+				words.append("\n")
+				#idx+=1
+				sym=""
+			
+			
+			elif i=="{" :
+				if sym != "" :
+					words.append(sym)
+				sym = ""
+				k=1
+				while t[idx+k] != "}" :
+					sym+=t[idx+k]
+					k+=1
+				idx+=k
+				words.append("{"+sym+"}")
+				sym=""
+			
+			else:
+				sym+=i
+			
+			idx+=1
+		
+		if sym != "" :
+			words.append(sym)
+		
+		tidx+=1
+		if tidx != len(tokens) :
+			words.append(" ")
+		
+			
+	#print(str(words))
+	# words now contains a nice list 
+	
+	# Alright now to draw this.
+	
+	cursor=[18, 283] #table because tuples are immutable
+	idx = 0
+	while idx < len(words) :
+		i = words[idx]
+		if i[0] == "{" and i[-1] == "}" :
+			symbol = Image.open("cardgen/symbols/"+curlyBracketsToFileName(i[1:-1])+".png").convert('RGBA')
+			symbol=symbol.resize((fontHeight,fontHeight),resample=Image.LANCZOS )
+			frame.paste(symbol, (cursor[0], cursor[1]), mask=symbol)
+			cursor[0]+=fontHeight
+		elif i == " ":
+			cursor[0]+=draw.textsize(" ", font=fontText)[0]
+		elif i == "\n" :
+			cursor[0] = 18
+			cursor[1] += fontHeight+1
+		else :
+			lenEval = cursor[0] + draw.textsize(i, font=fontText)[0]
+			if lenEval>294 : # outside the text frame
+				cursor[0] = 18
+				cursor[1] += fontHeight+1
+				draw.text((cursor[0], cursor[1]), i, font=fontText, fill=(0,0,0,224))
+				cursor[0] += draw.textsize(i, font=fontText)[0]
+			else :
+				draw.text((cursor[0], cursor[1]), i, font=fontText, fill=(0,0,0,224))
+				cursor[0] += draw.textsize(i, font=fontText)[0]
+			
+			
+		
+		idx+=1
+	
+	"""
 	if (len(text)<150) :
 		textWrapped=textwrap.wrap(text, width=35)
 		fontText = ImageFont.truetype("cardgen/mplantin.ttf",17)
@@ -324,7 +355,7 @@ def genCard(name="Nameless", type="Typeless", pt="", cost="", text="", imgurl=""
 		for i in textWrapped :
 			draw.text((18,startHeight), i, font=fontText, fill=(0,0,0,224))
 			startHeight+=15
-	
+	"""
 	
 	saveTitle=""
 	acceptableChars=['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
@@ -337,7 +368,7 @@ def genCard(name="Nameless", type="Typeless", pt="", cost="", text="", imgurl=""
 	
 	frame.convert("P") # convert to avoid bug https://github.com/python-pillow/Pillow/issues/646#issuecomment-42615401
 	frame.save("cardgen/temp/"+saveTitle+".png", "PNG")
-
+	
 	#TODO toy around that maybe at one point ?
 	if returnType=="path":
 		return "cardgen/temp/"+saveTitle+".png"
@@ -351,3 +382,71 @@ mediumText="{T}: Flip a coin. If you win the flip, tap target Student."
 bigText="When Jean-Marc, Homework enters the battlefield, flip a coin. If you win the flip, Jean-Marc, Homeworker gains \"At the beginning of your upkeep, add {R} to your mana pool.\"."
 genCard(name="Jean-Marc, Homeworker", type="Legendary Creature - Student", text=bigText, imgurl="http://67.media.tumblr.com/tumblr_lxlmcx8M1n1qc29lyo2_500.jpg")
 # """
+
+
+
+"""
+This translates what's inside curly brackets (for symbols) to the right filenames
+
+Say you have {U/P}
+pass it "U/P"
+it will return you "UP"
+you know it mean UP.png
+"""
+def curlyBracketsToFileName(item) :
+	
+	if item in ['W', 'U', 'B', 'R', 'G', 'S', 'X','C', 'T', 'E' ] :
+		return item
+	elif item in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'] :
+		return item
+	
+	elif item == "2B" or item == "2/B" or item == "B/2" or item == "B2" :
+		return "2B"
+	elif item == "2W" or item == "2/W" or item == "W/2" or item == "W2" :
+		return "2W"
+	elif item == "2G" or item == "2/G" or item == "G/2" or item == "G2" :
+		return "2G"
+	elif item == "2U" or item == "2/U" or item == "U/2" or item == "U2" :
+		return "2U"
+	elif item == "2R" or item == "2/R" or item == "R/2" or item == "R2" :
+		return "2R"
+	
+	#ten colour pairs.. yay..
+	elif item=="UB" or item=="BU" or item=="U/B" or item=="B/U" :
+		return "UB"
+	elif item=="UR" or item=="RU" or item=="U/R" or item=="R/U" :
+		return "UR"
+	elif item=="UG" or item=="GU" or item=="U/G" or item=="G/U" :
+		return "GU"
+	elif item=="UW" or item=="WU" or item=="U/W" or item=="W/U" :
+		return "WU"
+	
+	elif item=="GB" or item=="BG" or item=="G/B" or item=="B/G" :
+		return "BG"
+	elif item=="RB" or item=="BR" or item=="R/B" or item=="B/R" :
+		return "BR"
+	elif item=="WB" or item=="BW" or item=="W/B" or item=="B/W" :
+		return "WB"
+	
+	elif item=="WG" or item=="GW" or item=="W/G" or item=="G/W" :
+		return "GW"
+	elif item=="WR" or item=="RW" or item=="W/R" or item=="R/W" :
+		return "RW"
+		
+	elif item=="GR" or item=="RG" or item=="G/R" or item=="R/G" :
+		return "RG"
+	
+	#phyrexian mana
+	elif item=="UP" or item=="PU" or item=="U/P" or item=="P/U" :
+		return "UP"
+	elif item=="WP" or item=="PW" or item=="W/P" or item=="P/W" :
+		return "WP"
+	elif item=="GP" or item=="PG" or item=="G/P" or item=="P/G" :
+		return "GP"
+	elif item=="BP" or item=="PB" or item=="B/P" or item=="P/B" :
+		return "BP"
+	elif item=="RP" or item=="PR" or item=="R/P" or item=="P/R" :
+		return "RP"
+		
+	else :
+		return ""
