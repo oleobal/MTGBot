@@ -1,5 +1,4 @@
 import discord
-import ask_api
 
 import urllib.request
 import urllib.parse
@@ -17,6 +16,34 @@ properties = Properties()
 
 if not "cardgen" in properties.disabled :
 	from cardGenerator import *
+
+cards = None
+if not "cardsinbrackets" in properties.disabled :
+	global cards
+	import cardSearch
+	import json  
+	import zipfile  
+	# downloading things if possible
+	try :
+		z = zipfile.ZipFile("AllCards-x.json.zip", "r")
+		for filename in z.namelist():
+			with z.open(filename) as f:  
+				cards = json.loads((f.read()).decode("utf-8"))
+				 
+	except OSError as readError :
+		archiveURL = "https://mtgjson.com/json/AllCards-x.json.zip"
+		print("Could not open Cards JSON. Attempting to download "+archiveURL)
+		try: 
+			archive = urllib.request.urlretrieve(archiveURL, "AllCards-x.json.zip")
+			print("Archive downloaded.")
+			z = zipfile.ZipFile("AllCards-x.json.zip", "r")
+			for filename in z.namelist():
+				with z.open(filename) as f:  
+					cards = json.loads((f.read()).decode("utf-8"))
+		except urllib.error.HTTPError:
+			print("Could not download file from mtgjson.com. Disabling cards in brackets for this session.")
+			properties.disabled.append("cardsinbrackets")
+		
 
 # used to make sure two slot machine uses at the same second won't have the same results
 slotMachineGlobal = 0
@@ -285,7 +312,7 @@ async def on_message(message):
 								else :
 									pythonContent+=lineContent[i]+"\n"
 							else :
-								if (not "import" in lineContent[i]) and (not "exec" in lineContent[i]) and (not "eval" in lineContent[i]) and (not "getattr" in lineContent[i]): # this does cause collateral damage..
+								if (not "import" in lineContent[i]) and (not "exec" in lineContent[i]) and (not "eval" in lineContent[i]) and (not "getattr" in lineContent[i]) and (not "while True" in lineContent[i]): # this does cause collateral damage..
 								
 									if lineContent[i].rstrip()[-1] == ":" :
 										pythonContent+=lineContent[i]
@@ -497,18 +524,18 @@ async def on_message(message):
 	# this way of disabling them does mean we won't log them, but who cares
 	if "cardsinbrackets" not in properties.disabled :
 		fin = len(content)
-		debut = content.find("[") + 1
-		while debut > 0:
-			# ss1 = content[ouvert: fin]
-			fin = content.find("]", debut)
+		isItThere = content.find(properties.cardDelimiters[0])
+		debut=0
+		while isItThere > -1:
+			debut = content.find(properties.cardDelimiters[0],debut) + len(properties.cardDelimiters[0])
+			fin = content.find(properties.cardDelimiters[1], debut)
 			requete = content[debut: fin]
 			print(time+" | Request : " + requete)
-			if len(requete) > 2:
-				msg_list = ask_api.ask_card(requete)
+			if len(requete) > 0:
+				global cards
+				await client.send_message(message.channel, cardSearch.searchCard(cards, requete))
 				
-				for msg in msg_list:
-					await client.send_message(message.channel, msg)
-			debut = content.find("[", fin) + 1
-
+			isItThere = content.find(properties.cardDelimiters[0],debut)
 
 client.run(email, password)
+

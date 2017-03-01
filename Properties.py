@@ -18,6 +18,8 @@ helpmsg : String
 helpmsgcommand : Dictionnary
 (returned by "help <command>")
 
+cardDelimiters : array[2]
+
 """
 
 
@@ -33,6 +35,8 @@ class Properties :
 		self.disabled = []
 		self.helpmsg = "There is no help message in your config file. Probably an error !"
 		self.helpmsgcommand = {}
+		
+		self.cardDelimiters = ["[[","]]"]
 		
 		try :
 			fileStream = open(fileName)
@@ -67,6 +71,10 @@ class Properties :
 				self.disabled.append(workingLine[9:len(workingLine)])
 				#print(disabled)
 			
+			elif words[0] == "carddelimiters" :
+				if len(words) >= 3 :
+					self.cardDelimiters[0] = words[1]
+					self.cardDelimiters[1] = words[2]
 			
 			# now this is a bit more complicated..
 			elif words[0] == "helpmsg" :

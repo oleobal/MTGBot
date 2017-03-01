@@ -1,11 +1,15 @@
 from mtgsdk import Card
+from mtgsdk import restclient
 
 import urllib.request
 #this is used to test whether the URL we build for magiccards.info is valid
 #if it's not we fall back to Gatherer (lower scan quality)
 
 def ask_card(cardname):
-    cards = Card.where(name=cardname).all()
+    try:
+        cards = Card.where(name=cardname).all()
+    except restclient.MtgException as m:
+        return ["mtgsdk has thrown an exception :"+str(m.__str__())]
     l = []
     n = []
     i = 0
